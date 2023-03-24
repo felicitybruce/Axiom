@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Axiom</string>
+
+    <string name="com_auth0_domain">dev-jmiqxzs37xq6oq81.uk.auth0.com</string>
+
+    <string name="com_auth0_client_id">oEgPJOR1k3CV6iqZqAAQ5krcnKASTxsx</string>
+    <string name="com_auth0_scheme">https</string>
+
 </resources>
