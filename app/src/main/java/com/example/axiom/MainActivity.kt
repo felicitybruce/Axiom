@@ -1,13 +1,13 @@
 package com.example.axiom
 
 import android.graphics.Color
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.auth0.android.Auth0
 import com.auth0.android.authentication.AuthenticationException
 import com.auth0.android.callback.Callback
@@ -60,10 +60,10 @@ class MainActivity : AppCompatActivity() {
         // Colourful Google TV
         val googleText = "Sign in with Google"
         val spannableString = SpannableString(googleText)
-        spannableString.setSpan(ForegroundColorSpan(Color.BLUE), 13, 14, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        spannableString.setSpan(ForegroundColorSpan(Color.parseColor("#006DFF")), 13, 14, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         spannableString.setSpan(ForegroundColorSpan(Color.RED), 14, 15, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         spannableString.setSpan(ForegroundColorSpan(Color.parseColor("#F2DC23")), 15, 16, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-        spannableString.setSpan(ForegroundColorSpan(Color.BLUE), 16, 17, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        spannableString.setSpan(ForegroundColorSpan(Color.parseColor("#006DFF")), 16, 17, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         spannableString.setSpan(ForegroundColorSpan(Color.GREEN), 17, 18, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         spannableString.setSpan(ForegroundColorSpan(Color.RED), 18, 19, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
 
@@ -82,14 +82,22 @@ class MainActivity : AppCompatActivity() {
             // Launch the authentication passing the callback where the results will be received
             .start(this, object : Callback<Credentials, AuthenticationException> {
                 override fun onFailure(exception: AuthenticationException) {
+                    showSnackBar("Failure: ${exception.getCode()}")
                 }
 
                 override fun onSuccess(credentials: Credentials) {
                     val accessToken = credentials.accessToken
+                    showSnackBar("Success: ${credentials.accessToken}")
                 }
             })
     }
-
+    private fun showSnackBar(text: String) {
+        Snackbar.make(
+            binding.root,
+            text,
+            Snackbar.LENGTH_LONG
+        ).show()
+    }
 
     private fun writeData() {
         val firstName = binding.etFirstName.text.toString()
@@ -110,6 +118,10 @@ class MainActivity : AppCompatActivity() {
 
             binding.etFirstName.text.clear()
             binding.etLastName.text.clear()
+            binding.etEmail.text.clear()
+            binding.etUsername.text.clear()
+            binding.etPassword.text.clear()
+            binding.etCnfPassword.text.clear()
 
             Toast.makeText(this@MainActivity, "You are now an official Axiom affiliate 🤗", Toast.LENGTH_SHORT).show()
 
