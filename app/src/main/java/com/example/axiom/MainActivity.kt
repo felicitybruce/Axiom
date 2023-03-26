@@ -127,25 +127,6 @@ class MainActivity : AppCompatActivity() {
         return isValid
     }
 
-
-//
-//        // Checking if values entered are correct
-//        username.text.toString().isNotEmpty() &&
-//                password.text.toString().isNotEmpty() -> {
-//
-//            // Check if format is email
-//            if (username.text.toString().matches(Regex("[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"))) {
-//                // Happy path
-//
-//                firebaseSignIn()
-//
-//                //Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
-//
-//            } else {
-//                username.setError("Please Enter Valid Email", icon)
-//            }
-//        }
-
     private fun loginWithBrowser() {
         // Setup the WebAuthProvider, using the custom scheme and scope.
         WebAuthProvider.login(account)
