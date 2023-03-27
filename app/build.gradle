@@ -68,4 +68,9 @@ dependencies {
     implementation 'androidx.navigation:navigation-ui-ktx:2.5.3'
     //OAuth AuthO
     implementation 'com.auth0.android:auth0:2.+'
+    // Bcrypt
+    implementation 'org.mindrot:jbcrypt:0.4'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0'
+
 }

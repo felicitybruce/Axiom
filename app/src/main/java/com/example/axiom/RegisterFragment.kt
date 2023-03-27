@@ -21,15 +21,15 @@ import com.auth0.android.callback.Callback
 import com.auth0.android.provider.WebAuthProvider
 import com.auth0.android.result.Credentials
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-
+import kotlinx.coroutines.*
+import org.mindrot.jbcrypt.BCrypt
 
 class RegisterFragment : Fragment() {
-
     private lateinit var appDb: UserRoomDatabase
     private lateinit var account: Auth0
+
+    private val password = view?.findViewById<EditText>(R.id.etPassword)?.text.toString()
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -48,8 +48,7 @@ class RegisterFragment : Fragment() {
         appDb = UserRoomDatabase.getDatabase(requireContext())
 
         view.findViewById<Button>(R.id.btnRegReg).setOnClickListener {
-            nativeValidateForm()
-            writeData()
+            hashPassword(password)
         }
 
         view.findViewById<TextView>(R.id.tvGoogle).setOnClickListener {
@@ -68,14 +67,54 @@ class RegisterFragment : Fragment() {
         val textView = view.findViewById<TextView>(R.id.tvGoogle)
         textView.text = spannableString
 
-
-
         view.findViewById<Button>(R.id.btnLoginReg).setOnClickListener {
             var navLogin = activity as FragmentNavigation
             navLogin.navigateFrag(LoginFragment(), false)
         }
         return view
     }
+
+    private fun hashPassword(password: String) {
+        CoroutineScope(Dispatchers.Default).launch {
+            val salt = BCrypt.gensalt()
+            val hashedPassword = BCrypt.hashpw(password, salt)
+            withContext(Dispatchers.Main) {
+                // The hashed password can be used on the main thread
+                if (hashedPassword.isNotBlank()) {
+                    saveHashedPassword(hashedPassword)
+                } else {
+                    showSnackBar("Failed")
+                }
+            }
+        }
+    }
+
+    private fun saveHashedPassword(hashedPassword: String): Boolean {
+        val firstName = view?.findViewById<EditText>(R.id.etFirstName)?.text.toString()
+        val lastName = view?.findViewById<EditText>(R.id.etLastName)?.text.toString()
+        val email = view?.findViewById<EditText>(R.id.etEmail)?.text.toString()
+        val username = view?.findViewById<EditText>(R.id.etUsername)?.text.toString()
+
+        return try {
+            // save the hashed password to the database or server
+            if (nativeValidateForm()) {
+                val user = User(
+                    null, firstName, lastName, email, username, hashedPassword, hashedPassword
+                )
+                // Calling INSERT method from dao
+                GlobalScope.launch(Dispatchers.IO) {
+                    appDb.userDao().insert(user)
+                }
+                Toast.makeText(requireActivity(), "You are now an official Axiom affiliate 🤗", Toast.LENGTH_SHORT).show()
+                clearFormIcons()
+            }
+            true
+        } catch (e: Exception) {
+            Toast.makeText(requireActivity(), "Error:${e.message}", Toast.LENGTH_SHORT).show()
+            false
+        }
+    }
+
 
     private fun nativeValidateForm(): Boolean {
         val firstName = view?.findViewById<EditText>(R.id.etFirstName)?.text.toString()
@@ -92,13 +131,13 @@ class RegisterFragment : Fragment() {
         var isValid = true
 
         when {
+
             TextUtils.isEmpty(firstName.trim()) -> {
                 view?.findViewById<EditText>(R.id.etFirstName)?.apply {
                     error = "Please Enter First Name"
                     setCompoundDrawablesWithIntrinsicBounds(null, null, icon, null)
                     isValid = false
                 }
-
             }
             TextUtils.isEmpty(lastName.trim()) -> {
                 view?.findViewById<EditText>(R.id.etLastName)?.apply {
@@ -106,7 +145,6 @@ class RegisterFragment : Fragment() {
                     setCompoundDrawablesWithIntrinsicBounds(null, null, icon, null)
                     isValid = false
                 }
-
             }
             (TextUtils.isEmpty(email.trim())) || !email.matches(Regex("[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+")) -> {
                 view?.findViewById<EditText>(R.id.etEmail)?.apply {
@@ -141,39 +179,7 @@ class RegisterFragment : Fragment() {
         return isValid
     }
 
-    private fun writeData() {
-        nativeValidateForm()
-        val firstName = view?.findViewById<EditText>(R.id.etFirstName)?.text.toString()
-        val lastName = view?.findViewById<EditText>(R.id.etLastName)?.text.toString()
-        val email = view?.findViewById<EditText>(R.id.etEmail)?.text.toString()
-        val username = view?.findViewById<EditText>(R.id.etUsername)?.text.toString()
-        val password = view?.findViewById<EditText>(R.id.etPassword)?.text.toString()
-        val cnfPassword = view?.findViewById<EditText>(R.id.etCnfPassword)?.text.toString()
-
-        if (nativeValidateForm()) {
-            val user = User(
-                null, firstName, lastName, email, username, password, cnfPassword
-            )
-            // Calling INSERT method from dao
-            GlobalScope.launch(Dispatchers.IO) {
-                appDb.userDao().insert(user)
-            }
-
-            view?.findViewById<EditText>(R.id.etFirstName)?.text?.clear()
-            view?.findViewById<EditText>(R.id.etLastName)?.text?.clear()
-            view?.findViewById<EditText>(R.id.etEmail)?.text?.clear()
-            view?.findViewById<EditText>(R.id.etUsername)?.text?.clear()
-            view?.findViewById<EditText>(R.id.etPassword)?.text?.clear()
-            view?.findViewById<EditText>(R.id.etCnfPassword)?.text?.clear()
-            clearFormIcons()
-
-            Toast.makeText(requireActivity(), "You are now an official Axiom affiliate 🤗", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(requireActivity(), "Please check all inputs 😶", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-        private fun loginWithBrowser() {
+    private fun loginWithBrowser() {
         // Setup the WebAuthProvider, using the custom scheme and scope.
         WebAuthProvider.login(account)
             .withScheme(getString(R.string.com_auth0_scheme))
@@ -191,10 +197,16 @@ class RegisterFragment : Fragment() {
                     showSnackBar("Success: ${credentials.accessToken}")
                 }
             })
-
     }
 
     private fun clearFormIcons() {
+        view?.findViewById<EditText>(R.id.etFirstName)?.text?.clear()
+        view?.findViewById<EditText>(R.id.etLastName)?.text?.clear()
+        view?.findViewById<EditText>(R.id.etEmail)?.text?.clear()
+        view?.findViewById<EditText>(R.id.etUsername)?.text?.clear()
+        view?.findViewById<EditText>(R.id.etPassword)?.text?.clear()
+        view?.findViewById<EditText>(R.id.etCnfPassword)?.text?.clear()
+
         view?.findViewById<EditText>(R.id.etFirstName)?.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0)
         view?.findViewById<EditText>(R.id.etLastName)?.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0)
         view?.findViewById<EditText>(R.id.etEmail)?.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0)
