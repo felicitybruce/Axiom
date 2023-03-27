@@ -15,12 +15,19 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 class LoginFragment : Fragment() {
+    private lateinit var appDb: UserRoomDatabase
 
     private lateinit var logUserOrEmail: EditText
     private lateinit var logPassword: EditText
+
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -29,6 +36,9 @@ class LoginFragment : Fragment() {
 
         // Inflate the layout for this fragment
         val view =  inflater.inflate(R.layout.fragment_login, container, false)
+
+        appDb = UserRoomDatabase.getDatabase(requireContext())
+
 
         // Find views and assign them to the properties
         logUserOrEmail = view.findViewById<EditText>(R.id.etLoginUsernameOrEmail)
@@ -46,8 +56,39 @@ class LoginFragment : Fragment() {
         val textView = view.findViewById<TextView>(R.id.tvGoogle)
         textView.text = spannableString
 
-        view.findViewById<Button>(R.id.btnLogLog).setOnClickListener{
-            checkEditTextsAreEmpty(logUserOrEmail, logPassword)
+        view.findViewById<Button>(R.id.btnLogLog).setOnClickListener {
+            //checkEditTextsAreEmpty(logUserOrEmail, logPassword)
+
+            // Call isRegistered from a coroutine
+            lifecycleScope.launch {
+                val username = logUserOrEmail.text.toString()
+                val password = logPassword.text.toString()
+
+                if (username.isEmpty() || password.isEmpty()) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Please fill in all fields",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@launch
+                }
+
+                val userExists = withContext(Dispatchers.IO) {
+                    appDb.userDao().userExists(logUserOrEmail.text.toString(), logPassword.text.toString())
+                }
+                if (userExists > 0) {
+                    // The user exists, log them in
+                    Toast.makeText(requireContext(), "Successfully logged in", Toast.LENGTH_SHORT)
+                        .show()
+                } else {
+                    // The user doesn't exist or the credentials are incorrect
+                    Toast.makeText(
+                        requireContext(),
+                        "Incorrect login credentials",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
 
             // Hide keyboard on register button click
             val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -67,7 +108,6 @@ class LoginFragment : Fragment() {
         } else {
             // Do something else if both fields are not empty
             Toast.makeText(requireContext(), "happy happy happy", Toast.LENGTH_SHORT).show()
-
         }
     }
 }
