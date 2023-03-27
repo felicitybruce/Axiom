@@ -1,8 +1,6 @@
 package com.example.axiom
 
 import androidx.room.*
-import com.example.axiom.User
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface UserDao {
@@ -15,12 +13,16 @@ interface UserDao {
     @Delete
     suspend fun delete(user: User)
 
-//    @Query("SELECT * from user WHERE id = :id")
-//    suspend fun getUser(id: Int): Flow<User>
-
     @Query("SELECT * from user")
     fun getUsers(): List<User>
 
     @Query("SELECT * FROM user WHERE email LIKE :email LIMIT 1")
     suspend fun findByEmail(email: String): User
+
+    @Query("SELECT COUNT(*) FROM user WHERE username = :username AND password = :password")
+    fun userExists(username: String, password: String): Int
+
+    @Query("SELECT * FROM user WHERE id = :id LIMIT 1")
+    suspend fun getUserById(id: Int): User?
+
 }

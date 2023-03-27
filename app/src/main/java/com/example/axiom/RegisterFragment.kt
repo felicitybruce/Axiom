@@ -1,5 +1,6 @@
 package com.example.axiom
 
+import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
 import android.text.Spannable
@@ -9,19 +10,24 @@ import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.auth0.android.Auth0
 import com.auth0.android.authentication.AuthenticationException
 import com.auth0.android.callback.Callback
 import com.auth0.android.provider.WebAuthProvider
 import com.auth0.android.result.Credentials
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.mindrot.jbcrypt.BCrypt
 
 class RegisterFragment : Fragment() {
@@ -49,6 +55,9 @@ class RegisterFragment : Fragment() {
 
         view.findViewById<Button>(R.id.btnRegReg).setOnClickListener {
             hashPassword(password)
+            // Hide keyboard on register button click
+            val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
         }
 
         view.findViewById<TextView>(R.id.tvGoogle).setOnClickListener {
@@ -102,8 +111,10 @@ class RegisterFragment : Fragment() {
                     null, firstName, lastName, email, username, hashedPassword, hashedPassword
                 )
                 // Calling INSERT method from dao
-                GlobalScope.launch(Dispatchers.IO) {
-                    appDb.userDao().insert(user)
+                lifecycleScope.launch {
+                    withContext(Dispatchers.IO) {
+                        appDb.userDao().insert(user)
+                    }
                 }
                 Toast.makeText(requireActivity(), "You are now an official Axiom affiliate 🤗", Toast.LENGTH_SHORT).show()
                 clearFormIcons()
@@ -115,7 +126,6 @@ class RegisterFragment : Fragment() {
         }
     }
 
-
     private fun nativeValidateForm(): Boolean {
         val firstName = view?.findViewById<EditText>(R.id.etFirstName)?.text.toString()
         val lastName = view?.findViewById<EditText>(R.id.etLastName)?.text.toString()
@@ -125,13 +135,11 @@ class RegisterFragment : Fragment() {
         val cnfPassword = view?.findViewById<EditText>(R.id.etCnfPassword)?.text.toString()
 
         val icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_warning)
-
         icon?.setBounds(0, 0, 50, 50)
 
         var isValid = true
 
         when {
-
             TextUtils.isEmpty(firstName.trim()) -> {
                 view?.findViewById<EditText>(R.id.etFirstName)?.apply {
                     error = "Please Enter First Name"
@@ -153,7 +161,6 @@ class RegisterFragment : Fragment() {
                     isValid = false
                 }
             }
-
             TextUtils.isEmpty(username.trim()) -> {
                 view?.findViewById<EditText>(R.id.etUsername)?.apply {
                     error = "Please Enter Username"
@@ -214,7 +221,7 @@ class RegisterFragment : Fragment() {
         view?.findViewById<EditText>(R.id.etPassword)?.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0)
         view?.findViewById<EditText>(R.id.etCnfPassword)?.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0)
     }
-        private fun showSnackBar(text: String) {
+    private fun showSnackBar(text: String) {
         Snackbar.make(
             requireView(),
             text,
