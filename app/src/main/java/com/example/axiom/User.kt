@@ -19,6 +19,8 @@ data class User(
     @ColumnInfo(name = "password")
     val password: String,
     @ColumnInfo(name = "cnfPassword")
-    val cnfPassword: String
+    val cnfPassword: String,
+    @ColumnInfo(name = "salt")
+    val salt: String // add salt column to User entity
 
 )

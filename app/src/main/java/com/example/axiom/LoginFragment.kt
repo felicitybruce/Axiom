@@ -1,33 +1,28 @@
 package com.example.axiom
 
 import android.content.Context
-import android.graphics.Color
 import android.os.Bundle
-import android.text.Spannable
-import android.text.SpannableString
-import android.text.style.ForegroundColorSpan
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.mindrot.jbcrypt.BCrypt
 
 
 class LoginFragment : Fragment() {
     private lateinit var appDb: UserRoomDatabase
 
-    private lateinit var logUserOrEmail: EditText
-    private lateinit var logPassword: EditText
-
-
+    private lateinit var passwordLog: EditText
+    private lateinit var emailLog: EditText
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -35,79 +30,75 @@ class LoginFragment : Fragment() {
     ): View? {
 
         // Inflate the layout for this fragment
-        val view =  inflater.inflate(R.layout.fragment_login, container, false)
-
+        val view = inflater.inflate(R.layout.fragment_login, container, false)
         appDb = UserRoomDatabase.getDatabase(requireContext())
 
-
         // Find views and assign them to the properties
-        logUserOrEmail = view.findViewById<EditText>(R.id.etLoginUsernameOrEmail)
-        logPassword = view.findViewById<EditText>(R.id.etLoginPassword)
-
-        // Colourful Google TV
-        val googleText = "Sign in with Google"
-        val spannableString = SpannableString(googleText)
-        spannableString.setSpan(ForegroundColorSpan(Color.parseColor("#006DFF")), 13, 14, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-        spannableString.setSpan(ForegroundColorSpan(Color.RED), 14, 15, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-        spannableString.setSpan(ForegroundColorSpan(Color.parseColor("#F2DC23")), 15, 16, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-        spannableString.setSpan(ForegroundColorSpan(Color.parseColor("#006DFF")), 16, 17, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-        spannableString.setSpan(ForegroundColorSpan(Color.GREEN), 17, 18, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-        spannableString.setSpan(ForegroundColorSpan(Color.RED), 18, 19, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-        val textView = view.findViewById<TextView>(R.id.tvGoogle)
-        textView.text = spannableString
+        passwordLog = view.findViewById(R.id.etLoginPassword)
+        emailLog = view.findViewById(R.id.etLoginUsernameOrEmail)
 
         view.findViewById<Button>(R.id.btnLogLog).setOnClickListener {
-            //checkEditTextsAreEmpty(logUserOrEmail, logPassword)
-
-            // Call isRegistered from a coroutine
             lifecycleScope.launch {
-                val username = logUserOrEmail.text.toString()
-                val password = logPassword.text.toString()
-
-                if (username.isEmpty() || password.isEmpty()) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Please fill in all fields",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    return@launch
-                }
-
-                val userExists = withContext(Dispatchers.IO) {
-                    appDb.userDao().userExists(logUserOrEmail.text.toString(), logPassword.text.toString())
-                }
-                if (userExists > 0) {
-                    // The user exists, log them in
-                    Toast.makeText(requireContext(), "Successfully logged in", Toast.LENGTH_SHORT)
-                        .show()
-                } else {
-                    // The user doesn't exist or the credentials are incorrect
-                    Toast.makeText(
-                        requireContext(),
-                        "Incorrect login credentials",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
+                comparePassword(emailLog.text.toString(), passwordLog.text.toString())
             }
-
             // Hide keyboard on register button click
-            val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            val inputMethodManager =
+                requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
         }
 
-        view.findViewById<Button>(R.id.btnLogReg).setOnClickListener{
-            val navRegister = activity as FragmentNavigation
-            navRegister.navigateFrag(RegisterFragment(), false)
-        }
         return view
     }
+    private suspend fun comparePassword(email: String, password: String) {
+        // Log the values from the EditText views
+        Log.d("LOGIN", "Email from form: $email, Password from form: $password")
 
-    private fun checkEditTextsAreEmpty(editText1: EditText?, editText2: EditText?) {
-        if (editText1?.text?.isEmpty() == true || editText2?.text?.isEmpty() == true) {
-            Toast.makeText(requireContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show()
-        } else {
-            // Do something else if both fields are not empty
-            Toast.makeText(requireContext(), "happy happy happy", Toast.LENGTH_SHORT).show()
+        // Retrieve the user from the Room database
+        val user = withContext(Dispatchers.IO) {
+            appDb.userDao().getUserByEmail(email)
         }
+
+        // Log the user object stored in db
+        Log.d("LOGIN", "User from db: $user")
+
+        if (user == null ) {
+            Log.d("LOGIN", "User not found for email: $email")
+        } else {
+            // Extract the salt value from the user object
+            val salt = user.salt
+
+            // Hash the entered password using the retrieved salt value
+            val hashedPassword = BCrypt.hashpw(password, salt)
+
+            // Log the hashed password and salt
+            Log.d("LOGIN", "Hashed password: $hashedPassword, Salt: $salt")
+
+            // Check if the entered password matches the stored password
+            val isMatch = BCrypt.checkpw(password, hashedPassword)
+
+            // Log whether the entered password matched the stored password
+            Log.d("LOGIN", "Entered password matches stored password: $isMatch")
+
+            // Check if the entered email matches the stored email
+            val isEmailMatch = email == user.email
+
+            // Log whether the entered email matched the stored email
+            Log.d("LOGIN", "Entered email matches stored email: $isEmailMatch")
+
+            if (isMatch && isEmailMatch) {
+                Log.d("LOGIN", "$email matches hashed password and email matches")
+            } else {
+                Log.d("LOGIN", "$email does not match")
+            }
+        }
+    }
+
+
+        private fun showSnackBar(text: String) {
+        Snackbar.make(
+            requireView(),
+            text,
+            Snackbar.LENGTH_LONG
+        ).show()
     }
 }
