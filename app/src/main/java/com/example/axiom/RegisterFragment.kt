@@ -87,6 +87,7 @@ class RegisterFragment : Fragment() {
         CoroutineScope(Dispatchers.Default).launch {
             val salt = BCrypt.gensalt()
             val hashedPassword = BCrypt.hashpw(password, salt)
+
             withContext(Dispatchers.Main) {
                 // The hashed password can be used on the main thread
                 if (hashedPassword.isNotBlank()) {
@@ -98,26 +99,47 @@ class RegisterFragment : Fragment() {
         }
     }
 
-    private fun saveHashedPassword(hashedPassword: String): Boolean {
+    private fun saveHashedPassword(password: String): Boolean {
         val firstName = view?.findViewById<EditText>(R.id.etFirstName)?.text.toString()
         val lastName = view?.findViewById<EditText>(R.id.etLastName)?.text.toString()
         val email = view?.findViewById<EditText>(R.id.etEmail)?.text.toString()
         val username = view?.findViewById<EditText>(R.id.etUsername)?.text.toString()
+        var salt = ""
 
         return try {
-            // save the hashed password to the database or server
-            if (nativeValidateForm()) {
-                val user = User(
-                    null, firstName, lastName, email, username, hashedPassword, hashedPassword
-                )
-                // Calling INSERT method from dao
-                lifecycleScope.launch {
-                    withContext(Dispatchers.IO) {
-                        appDb.userDao().insert(user)
+            // generate salt and hash the password
+            CoroutineScope(Dispatchers.Default).launch {
+                salt = BCrypt.gensalt()
+                val hashedPassword = BCrypt.hashpw(password, salt)
+
+                withContext(Dispatchers.Main) {
+                    // create user object and save it to the database
+                    if (nativeValidateForm()) {
+                        // check if email and username already exist in the database
+                        val existingUserWithEmail = appDb.userDao().getUserByEmail(email)
+                        val existingUserWithUsername = appDb.userDao().getUserByUsername(username)
+
+                        if (existingUserWithEmail != null) {
+                            // email already exists, show error message
+                            showSnackBar("Email is already taken")
+                        } else if (existingUserWithUsername != null) {
+                            // username already exists, show error message
+                            showSnackBar("Username is already taken")
+                        } else {
+                            // email and username are available, insert new user record
+                            val user = User(null, firstName, lastName, email, username, hashedPassword, hashedPassword, salt)
+                            lifecycleScope.launch {
+                                withContext(Dispatchers.IO) {
+                                    appDb.userDao().insert(user)
+                                }
+                            }
+                            Toast.makeText(requireActivity(), "You are now an official Axiom affiliate 🤗", Toast.LENGTH_SHORT).show()
+                            clearFormIcons()
+                        }
+                    } else {
+                        showSnackBar("Failed")
                     }
                 }
-                Toast.makeText(requireActivity(), "You are now an official Axiom affiliate 🤗", Toast.LENGTH_SHORT).show()
-                clearFormIcons()
             }
             true
         } catch (e: Exception) {
@@ -125,6 +147,7 @@ class RegisterFragment : Fragment() {
             false
         }
     }
+
 
     private fun nativeValidateForm(): Boolean {
         val firstName = view?.findViewById<EditText>(R.id.etFirstName)?.text.toString()
@@ -195,13 +218,13 @@ class RegisterFragment : Fragment() {
 
             // Launch the authentication passing the callback where the results will be received
             .start(requireContext(), object : Callback<Credentials, AuthenticationException> {
-                override fun onFailure(exception: AuthenticationException) {
-                    showSnackBar("Failure: ${exception.getCode()}")
+                override fun onFailure(error: AuthenticationException) {
+                    showSnackBar("Failure: ${error.getCode()}")
                 }
 
-                override fun onSuccess(credentials: Credentials) {
-                    val accessToken = credentials.accessToken
-                    showSnackBar("Success: ${credentials.accessToken}")
+                override fun onSuccess(result: Credentials) {
+                    val accessToken = result.accessToken
+                    showSnackBar("Success: ${result.accessToken}")
                 }
             })
     }
