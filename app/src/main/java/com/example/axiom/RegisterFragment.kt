@@ -54,7 +54,7 @@ class RegisterFragment : Fragment() {
         appDb = UserRoomDatabase.getDatabase(requireContext())
 
         view.findViewById<Button>(R.id.btnRegReg).setOnClickListener {
-            hashPassword(password)
+            saveHashedPassword(password)
             // Hide keyboard on register button click
             val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
@@ -76,28 +76,14 @@ class RegisterFragment : Fragment() {
         val textView = view.findViewById<TextView>(R.id.tvGoogle)
         textView.text = spannableString
 
-        view.findViewById<Button>(R.id.btnLoginReg).setOnClickListener {
+        view.findViewById<Button>(R.id.btnLogReg).setOnClickListener {
             var navLogin = activity as FragmentNavigation
             navLogin.navigateFrag(LoginFragment(), false)
         }
         return view
     }
 
-    private fun hashPassword(password: String) {
-        CoroutineScope(Dispatchers.Default).launch {
-            val salt = BCrypt.gensalt()
-            val hashedPassword = BCrypt.hashpw(password, salt)
 
-            withContext(Dispatchers.Main) {
-                // The hashed password can be used on the main thread
-                if (hashedPassword.isNotBlank()) {
-                    saveHashedPassword(hashedPassword)
-                } else {
-                    showSnackBar("Failed")
-                }
-            }
-        }
-    }
 
     private fun saveHashedPassword(password: String): Boolean {
         val firstName = view?.findViewById<EditText>(R.id.etFirstName)?.text.toString()
@@ -137,7 +123,7 @@ class RegisterFragment : Fragment() {
                             clearFormIcons()
                         }
                     } else {
-                        showSnackBar("Failed")
+                        showSnackBar("Please fill in all fields correctly.")
                     }
                 }
             }
