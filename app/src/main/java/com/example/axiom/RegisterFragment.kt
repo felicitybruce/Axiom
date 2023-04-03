@@ -33,9 +33,7 @@ import org.mindrot.jbcrypt.BCrypt
 class RegisterFragment : Fragment() {
     private lateinit var appDb: UserRoomDatabase
     private lateinit var account: Auth0
-
     private val password = view?.findViewById<EditText>(R.id.etPassword)?.text.toString()
-
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -90,12 +88,14 @@ class RegisterFragment : Fragment() {
         val lastName = view?.findViewById<EditText>(R.id.etLastName)?.text.toString()
         val email = view?.findViewById<EditText>(R.id.etEmail)?.text.toString()
         val username = view?.findViewById<EditText>(R.id.etUsername)?.text.toString()
-        var salt = ""
+        val password = view?.findViewById<EditText>(R.id.etPassword)?.text.toString()
+        val cnfPassword = view?.findViewById<EditText>(R.id.etCnfPassword)?.text.toString()
+
 
         return try {
             // generate salt and hash the password
             CoroutineScope(Dispatchers.Default).launch {
-                salt = BCrypt.gensalt()
+                val salt = BCrypt.gensalt()
                 val hashedPassword = BCrypt.hashpw(password, salt)
 
                 withContext(Dispatchers.Main) {
