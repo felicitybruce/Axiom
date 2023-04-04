@@ -30,12 +30,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.mindrot.jbcrypt.BCrypt
 
-
 class LoginFragment : Fragment() {
     private lateinit var appDb: UserRoomDatabase
     private lateinit var account: Auth0
-
-
     private lateinit var passwordLog: EditText
     private lateinit var emailLog: EditText
 
@@ -50,7 +47,6 @@ class LoginFragment : Fragment() {
 
         val icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_warning)
         icon?.setBounds(0, 0, 50, 50)
-
 
         // Set up the account object with the Auth0 application details
         account = Auth0(
@@ -99,7 +95,9 @@ class LoginFragment : Fragment() {
         )
         val textView = view.findViewById<TextView>(R.id.tvGoogle)
         textView.text = spannableString
-
+        textView.setOnClickListener{
+            loginWithBrowser()
+        }
 
         // Find views and assign them to the properties
         passwordLog = view.findViewById(R.id.etLoginPassword)
@@ -110,7 +108,6 @@ class LoginFragment : Fragment() {
             val navRegister = activity as FragmentNavigation
             navRegister.navigateFrag(RegisterFragment(), false)
         }
-
 
         view.findViewById<Button>(R.id.btnLogLog).setOnClickListener {
             // Hide keyboard on register button click
@@ -156,6 +153,9 @@ class LoginFragment : Fragment() {
                 override fun onSuccess(result: Credentials) {
                     val accessToken = result.accessToken
                     showSnackBar("Success: ${result.accessToken}")
+                    var navLogin = activity as FragmentNavigation
+                    navLogin.navigateFrag(HomeFragment(), false)
+
                 }
             })
     }
@@ -193,15 +193,17 @@ class LoginFragment : Fragment() {
 
             if (hashedPw.substringBefore(".")== user.password.substringBefore(".")) {
                 // Passwords match
+                Toast.makeText(requireActivity(), "Loading home page ⏳", Toast.LENGTH_SHORT).show()
                 Log.d("LOGIN", "Passwords match for email: $email")
+                var navLogin = activity as FragmentNavigation
+                navLogin.navigateFrag(HomeFragment(), false)
             } else {
                 // Passwords do not match
                 Log.d("LOGIN", "Passwords do not match for email: $email")
+                showSnackBar("Password does not match the email: $email")
             }
         }
     }
-
-
 
     private fun showSnackBar(text: String) {
         Snackbar.make(
@@ -212,3 +214,5 @@ class LoginFragment : Fragment() {
     }
 }
 // TODO: 1)LOGIN ALWAYS RETURNS TRUE EVEN IF PASSWORD IS WRONG. OK FOR IF EMAIL IS WRONG
+// TODO: 2) USE GET INSTEAD OF NAV FOR NAVIGATING PAGES
+// TODO: 3) JWT

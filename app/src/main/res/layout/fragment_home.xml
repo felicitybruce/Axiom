@@ -1,14 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".HomeFragment">
+    android:layout_height="match_parent">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <!-- Note: A RecyclerView can also be used -->
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:contentDescription="Nested scroll"
+        android:paddingBottom="100dp"
+        android:clipToPadding="false">
 
-</FrameLayout>
+        <!-- Scrollable content -->
+
+    </androidx.core.widget.NestedScrollView>
+
+
+    <com.google.android.material.bottomappbar.BottomAppBar
+        android:id="@+id/bottomAppBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        style="@style/Widget.MaterialComponents.BottomAppBar.Colored"
+        app:navigationIcon="@drawable/ic_menu"
+        app:menu="@menu/bottom_nav_menu"
+        app:hideOnScroll="true"
+        app:navigationIconTint="@color/md_theme_light_surfaceVariant"
+        />
+
+
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/ic_feather"
+        app:layout_anchor="@id/bottomAppBar"
+        android:contentDescription="Curate new blog"
+        />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
