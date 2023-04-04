@@ -121,6 +121,9 @@ class RegisterFragment : Fragment() {
                             }
                             Toast.makeText(requireActivity(), "You are now an official Axiom affiliate 🤗", Toast.LENGTH_SHORT).show()
                             clearFormIcons()
+                            var navLogin = activity as FragmentNavigation
+                            navLogin.navigateFrag(HomeFragment(), false)
+
                         }
                     } else {
                         showSnackBar("Please fill in all fields correctly.")
@@ -211,6 +214,9 @@ class RegisterFragment : Fragment() {
                 override fun onSuccess(result: Credentials) {
                     val accessToken = result.accessToken
                     showSnackBar("Success: ${result.accessToken}")
+                    var navLogin = activity as FragmentNavigation
+                    navLogin.navigateFrag(HomeFragment(), false)
+
                 }
             })
     }
