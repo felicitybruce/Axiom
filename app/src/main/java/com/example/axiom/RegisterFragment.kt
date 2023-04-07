@@ -23,6 +23,8 @@ import com.auth0.android.authentication.AuthenticationException
 import com.auth0.android.callback.Callback
 import com.auth0.android.provider.WebAuthProvider
 import com.auth0.android.result.Credentials
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -80,8 +82,7 @@ class RegisterFragment : Fragment() {
         }
         return view
     }
-
-
+    private val JWT_SECRET = BuildConfig.MY_SECRET
 
     private fun saveHashedPassword(password: String): Boolean {
         val firstName = view?.findViewById<EditText>(R.id.etFirstName)?.text.toString()
@@ -119,7 +120,15 @@ class RegisterFragment : Fragment() {
                                     appDb.userDao().insert(user)
                                 }
                             }
-                            Toast.makeText(requireActivity(), "You are now an official Axiom affiliate 🤗", Toast.LENGTH_SHORT).show()
+                            val token = JWT.create()
+                                .withClaim("username", email)
+                                .withClaim("password", password)
+                                //SIGNING
+                                // Once user authenticated via username & pw, grant token that has encrypted signature
+                                // to verify that they are who they say on
+                                //future requests
+                                .sign(Algorithm.HMAC256(JWT_SECRET))
+                            Toast.makeText(requireActivity(), "You are now an official Axiom affiliate 🤗. Here is your token: $token", Toast.LENGTH_LONG).show()
                             clearFormIcons()
                             var navLogin = activity as FragmentNavigation
                             navLogin.navigateFrag(HomeFragment(), false)
@@ -136,7 +145,6 @@ class RegisterFragment : Fragment() {
             false
         }
     }
-
 
     private fun nativeValidateForm(): Boolean {
         val firstName = view?.findViewById<EditText>(R.id.etFirstName)?.text.toString()

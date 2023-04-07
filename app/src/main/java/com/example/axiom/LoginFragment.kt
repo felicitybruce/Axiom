@@ -24,11 +24,15 @@ import com.auth0.android.authentication.AuthenticationException
 import com.auth0.android.callback.Callback
 import com.auth0.android.provider.WebAuthProvider
 import com.auth0.android.result.Credentials
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.mindrot.jbcrypt.BCrypt
+
+
 
 class LoginFragment : Fragment() {
     private lateinit var appDb: UserRoomDatabase
@@ -43,10 +47,12 @@ class LoginFragment : Fragment() {
 
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_login, container, false)
+
         appDb = UserRoomDatabase.getDatabase(requireContext())
 
         val icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_warning)
         icon?.setBounds(0, 0, 50, 50)
+
 
         // Set up the account object with the Auth0 application details
         account = Auth0(
@@ -130,6 +136,7 @@ class LoginFragment : Fragment() {
             inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
             lifecycleScope.launch {
                 login(emailLog.text.toString(), passwordLog.text.toString())
+
             }
         }
 
@@ -167,8 +174,54 @@ class LoginFragment : Fragment() {
         //view?.findViewById<EditText>(R.id.etLoginUsernameOrEmail)?.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0)
         //view?.findViewById<EditText>(R.id.etLoginPassword)?.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0)
     }
+    private val JWT_SECRET = BuildConfig.MY_SECRET
 
-
+//    private suspend fun tokenisation() {
+//        val JWT_SECRET = BuildConfig.MY_SECRET
+//
+//
+//        // Format xxx.xxxx.xxx
+//        //      algorithm/token type -> payload/user data -> signature that tells us if the person is verified
+//        val token = JWT.create()
+//            .withClaim("username", emailLog.text.toString())
+//            .withClaim("password", passwordLog.text.toString())
+//            //SIGNING
+//            // Once user authenticated via username & pw, grant token that has encrypted signature
+//            // to verify that they are who they say on
+//            //future requests
+//            .sign(Algorithm.HMAC256(JWT_SECRET))
+//
+//        Log.d("jwt", "3 part token $token")
+//        showSnackBar("Thanks for signing in! Here is your token: $token")
+//
+//
+//        val verifier = JWT.require(Algorithm.HMAC256(JWT_SECRET))
+//            .withClaim("username", emailLog.text.toString())
+//            .build()
+//
+//        // returns a DecodedJWT object
+//        // To know if we can trust the log in request
+//        // -decrypt signature
+//        // -check expiration
+//        // -decode payload
+//        val decodedJwt = JWT.decode(token)
+//        //can then access the individual claims or fields from
+//        // the decoded JWT using the getter methods provided by the DecodedJWT object
+//        val password = decodedJwt.getClaim("password").asString()
+//        val username = decodedJwt.getClaim("username").asString()
+//
+//        Log.d("jwt", "decoded jwt $decodedJwt, password $password, username $username")
+//
+//
+//        Log.d("jwt", "my secret from gradle $JWT_SECRET")
+//
+//        val email = emailLog.text.toString()
+//        val user = withContext(Dispatchers.IO) {
+//            appDb.userDao().getUserByEmail(email)
+//        }
+//
+//    }
+    
     private suspend fun login(email: String, plainTextPw: String) {
         val user = withContext(Dispatchers.IO) {
             appDb.userDao().getUserByEmail(email)
@@ -190,10 +243,25 @@ class LoginFragment : Fragment() {
             Log.d("LOGIN", "salt from db ${user.salt} test salt for edittext $salt")
             Log.d("LOGIN", "lengths pw in db ${user.password.length} pw from editeext ${hashedPw.length}")
 
-
             if (hashedPw.substringBefore(".")== user.password.substringBefore(".")) {
                 // Passwords match
-                Toast.makeText(requireActivity(), "Loading home page ⏳", Toast.LENGTH_SHORT).show()
+
+                //Sign token
+                // Format xxx.xxxx.xxx
+                // algorithm/token type -> payload/user data -> signature that tells us if the person is verified
+                val token = JWT.create()
+                    .withClaim("username", emailLog.text.toString())
+                    .withClaim("password", passwordLog.text.toString())
+                    //SIGNING
+                    // Once user authenticated via username & pw, grant token that has encrypted signature
+                    // to verify that they are who they say on
+                    //future requests
+                    .sign(Algorithm.HMAC256(JWT_SECRET))
+
+                Log.d("jwt", "3 part token $token")
+                Log.d("jwt", "my secret from gradle $JWT_SECRET")
+
+                Toast.makeText(requireActivity(), "Welcome back! Here is your token $token", Toast.LENGTH_LONG).show()
                 Log.d("LOGIN", "Passwords match for email: $email")
                 var navLogin = activity as FragmentNavigation
                 navLogin.navigateFrag(HomeFragment(), false)
@@ -214,5 +282,5 @@ class LoginFragment : Fragment() {
     }
 }
 // TODO: 1)LOGIN ALWAYS RETURNS TRUE EVEN IF PASSWORD IS WRONG. OK FOR IF EMAIL IS WRONG
-// TODO: 2) USE GET INSTEAD OF NAV FOR NAVIGATING PAGES
-// TODO: 3) JWT
+// TODO: 2) JWT: ACTUAL AUTH PROCESS - DON'T HAVE TO KEEP SIGINING IN - CREATE BACKEND IN JAVASCRIPT
+// TODO: 3)

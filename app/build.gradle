@@ -22,9 +22,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField 'String', 'MY_SECRET', '"bffbdb871ef4f400e5c9077cc859c1d038a2e9e0b248243df193084c31b0f47b20535c79eae657cd0e43001d30360b13da616711ae556cba58382f275dec4d3b"'
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField 'String', 'MY_SECRET', '"bffbdb871ef4f400e5c9077cc859c1d038a2e9e0b248243df193084c31b0f47b20535c79eae657cd0e43001d30360b13da616711ae556cba58382f275dec4d3b"'
         }
     }
 
@@ -43,6 +47,7 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
 }
 
 dependencies {
@@ -73,8 +78,14 @@ dependencies {
     implementation 'org.mindrot:jbcrypt:0.4'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0'
-
-
+    // JWT
+    implementation 'com.auth0:java-jwt:3.18.2'
+    //d
 
 
 }
+
+
+
+
+

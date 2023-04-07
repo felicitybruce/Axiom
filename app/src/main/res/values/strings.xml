@@ -12,6 +12,9 @@
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
     <string name="title_search">Search</string>
+    <string name="channel_name">Search</string>
+
+
 
 
 </resources>
