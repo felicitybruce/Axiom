@@ -32,5 +32,4 @@ interface UserDao {
     @Query("SELECT * FROM user WHERE password = :password LIMIT 1")
     suspend fun getUserPassword(password: String): User?
 
-
 }
