@@ -22,9 +22,7 @@ class MainActivity : AppCompatActivity(), FragmentNavigation {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContentView(R.layout.activity_main)
-
         // Call the sendNotification function when a button is clicked
         val button = findViewById<ImageButton>(R.id.btnNotification)
         button.setOnClickListener {
@@ -77,7 +75,5 @@ class MainActivity : AppCompatActivity(), FragmentNavigation {
         val notificationId = 1 // Unique notification ID
         val notificationManager = NotificationManagerCompat.from(this)
         notificationManager.notify(notificationId, builder.build())
-
-
     }
 }
