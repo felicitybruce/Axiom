@@ -65,7 +65,7 @@ class MainActivity : AppCompatActivity(), FragmentNavigation {
 
         // Build the notification
         val builder = NotificationCompat.Builder(this, "my_channel")
-            .setSmallIcon(R.drawable.ic_new_notification)
+            .setSmallIcon(R.drawable.ic_feather)
             .setContentTitle("Axiom") // Notification title
             .setContentText("What are you waiting for? Curate your first blog now 🪶.")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
