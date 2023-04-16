@@ -14,23 +14,15 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import com.auth0.android.Auth0
 import com.auth0.android.authentication.AuthenticationException
 import com.auth0.android.callback.Callback
 import com.auth0.android.provider.WebAuthProvider
 import com.auth0.android.result.Credentials
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.mindrot.jbcrypt.BCrypt
+
 
 class RegisterFragment : Fragment() {
     private lateinit var appDb: UserRoomDatabase
@@ -54,7 +46,7 @@ class RegisterFragment : Fragment() {
         appDb = UserRoomDatabase.getDatabase(requireContext())
 
         view.findViewById<Button>(R.id.btnRegReg).setOnClickListener {
-            saveHashedPassword(password)
+//            register()
             // Hide keyboard on register button click
             val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
@@ -84,67 +76,33 @@ class RegisterFragment : Fragment() {
     }
     private val JWT_SECRET = BuildConfig.MY_SECRET
 
-    private fun saveHashedPassword(password: String): Boolean {
-        val firstName = view?.findViewById<EditText>(R.id.etFirstName)?.text.toString()
-        val lastName = view?.findViewById<EditText>(R.id.etLastName)?.text.toString()
-        val email = view?.findViewById<EditText>(R.id.etEmail)?.text.toString()
-        val username = view?.findViewById<EditText>(R.id.etUsername)?.text.toString()
-        val password = view?.findViewById<EditText>(R.id.etPassword)?.text.toString()
-        val cnfPassword = view?.findViewById<EditText>(R.id.etCnfPassword)?.text.toString()
-
-
-        return try {
-            // generate salt and hash the password
-            CoroutineScope(Dispatchers.Default).launch {
-                val salt = BCrypt.gensalt()
-                val hashedPassword = BCrypt.hashpw(password, salt)
-
-                withContext(Dispatchers.Main) {
-                    // create user object and save it to the database
-                    if (nativeValidateForm()) {
-                        // check if email and username already exist in the database
-                        val existingUserWithEmail = appDb.userDao().getUserByEmail(email)
-                        val existingUserWithUsername = appDb.userDao().getUserByUsername(username)
-
-                        if (existingUserWithEmail != null) {
-                            // email already exists, show error message
-                            showSnackBar("Email is already taken")
-                        } else if (existingUserWithUsername != null) {
-                            // username already exists, show error message
-                            showSnackBar("Username is already taken")
-                        } else {
-                            // email and username are available, insert new user record
-                            val user = User(null, firstName, lastName, email, username, hashedPassword, hashedPassword, salt)
-                            lifecycleScope.launch {
-                                withContext(Dispatchers.IO) {
-                                    appDb.userDao().insert(user)
-                                }
-                            }
-                            val token = JWT.create()
-                                .withClaim("username", email)
-                                .withClaim("password", password)
-                                //SIGNING
-                                // Once user authenticated via username & pw, grant token that has encrypted signature
-                                // to verify that they are who they say on
-                                //future requests
-                                .sign(Algorithm.HMAC256(JWT_SECRET))
-                            Toast.makeText(requireActivity(), "You are now an official Axiom affiliate 🤗. Here is your token: $token", Toast.LENGTH_LONG).show()
-                            clearFormIcons()
-                            var navLogin = activity as FragmentNavigation
-                            navLogin.navigateFrag(HomeFragment(), false)
-
-                        }
-                    } else {
-                        showSnackBar("Please fill in all fields correctly.")
-                    }
-                }
-            }
-            true
-        } catch (e: Exception) {
-            Toast.makeText(requireActivity(), "Error:${e.message}", Toast.LENGTH_SHORT).show()
-            false
-        }
-    }
+//    private fun register() {
+//        val firstName = view?.findViewById<EditText>(R.id.etFirstName)?.text.toString()
+//        val lastName = view?.findViewById<EditText>(R.id.etLastName)?.text.toString()
+//        val email = view?.findViewById<EditText>(R.id.etEmail)?.text.toString()
+//        val username = view?.findViewById<EditText>(R.id.etUsername)?.text.toString()
+//        val password = view?.findViewById<EditText>(R.id.etPassword)?.text.toString()
+//        val cnfPassword = view?.findViewById<EditText>(R.id.etCnfPassword)?.text.toString()
+//
+//        val user = testUser(firstName, lastName, email, password)
+//
+//        CoroutineScope(Dispatchers.IO).launch {
+//            try {
+//                registerUser(requireContext(), user)
+//                // Registration successful, navigate to another fragment or activity
+//                var navLogin = activity as FragmentNavigation
+//                navLogin.navigateFrag(HomeFragment(), false)
+//                Toast.makeText(requireActivity(), "You are now an official Axiom affiliate 🤗.", Toast.LENGTH_LONG).show()
+//            } catch (e: Exception) {
+//                // Handle registration failure, display error message
+//                Log.d("reg", "register: ${e.message}")
+//                withContext(Dispatchers.Main) {
+//                    Toast.makeText(requireContext(), "Registration failed", Toast.LENGTH_SHORT).show()
+//                }
+//            }
+//        }
+//
+//    }
 
     private fun nativeValidateForm(): Boolean {
         val firstName = view?.findViewById<EditText>(R.id.etFirstName)?.text.toString()
