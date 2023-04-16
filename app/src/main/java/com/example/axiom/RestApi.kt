@@ -24,15 +24,8 @@ interface RestApi {
     fun test(): Call<String>
 
     @POST("/register")
-    fun register(@Body userr: Userr): Call<String>
+    fun register(@Body user: User): Call<String>
 }
-
-data class Userr(
-    val name: String,
-    val email: String,
-    val password: String
-)
-
 
 fun main() {
     val server = HttpServer.create(InetSocketAddress(8080), 0)
@@ -69,32 +62,33 @@ fun main() {
             exchange.responseBody.write(message.toByteArray())
             exchange.responseBody.close()
         }
+    }
 
-        server.createContext("/register") { exchange ->
-            if (exchange.requestMethod == "POST") {
-                val requestBody = BufferedReader(InputStreamReader(exchange.requestBody)).use { it.readText() }
+    server.createContext("/register") { exchange ->
+        if (exchange.requestMethod == "POST") {
+            val requestBody = BufferedReader(InputStreamReader(exchange.requestBody)).use { it.readText() }
 
-                // Deserialize JSON data into User object
-                val userType: Type = object : TypeToken<User>() {}.type
-                val user = Gson().fromJson<User>(requestBody, userType)
+            // Deserialize JSON data into User object
+            val userType: Type = object : TypeToken<User>() {}.type
+            val user = Gson().fromJson<User>(requestBody, userType)
 
-                // Do something with the User object, e.g. store it in a database
-                println("Received user: $user")
+            // Do something with the User object, e.g. store it in a database
+            println("Received user: $user")
 
-                // Send response
-                val response = "Success!".toByteArray()
-                exchange.sendResponseHeaders(200, response.size.toLong())
-                exchange.responseBody.write(response)
-                exchange.responseBody.close()
-            } else {
-                val message = "Soz, not allowed"
-                exchange.sendResponseHeaders(405, message.toByteArray().size.toLong())
-                exchange.responseHeaders.set("Content-Type", "text/plain")
-                exchange.responseBody.write(message.toByteArray())
-                exchange.responseBody.close()
-            }
+            // Send response
+            val response = "Success!".toByteArray()
+            exchange.sendResponseHeaders(200, response.size.toLong())
+            exchange.responseBody.write(response)
+            exchange.responseBody.close()
+        } else {
+            val message = "Soz, not allowed"
+            exchange.sendResponseHeaders(405, message.toByteArray().size.toLong())
+            exchange.responseHeaders.set("Content-Type", "text/plain")
+            exchange.responseBody.write(message.toByteArray())
+            exchange.responseBody.close()
         }
     }
+
     server.start()
 
     val retrofit = Retrofit.Builder()
