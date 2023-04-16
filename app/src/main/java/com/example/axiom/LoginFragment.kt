@@ -1,36 +1,25 @@
 package com.example.axiom
 
-import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.TextUtils
 import android.text.style.ForegroundColorSpan
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import com.auth0.android.Auth0
 import com.auth0.android.authentication.AuthenticationException
 import com.auth0.android.callback.Callback
 import com.auth0.android.provider.WebAuthProvider
 import com.auth0.android.result.Credentials
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.mindrot.jbcrypt.BCrypt
 
 
 
@@ -131,13 +120,13 @@ class LoginFragment : Fragment() {
                     }
                 }
             }
-            val inputMethodManager =
-                requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
-            lifecycleScope.launch {
-                login(emailLog.text.toString(), passwordLog.text.toString())
-
-            }
+//            val inputMethodManager =
+//                requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+//            inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
+//            lifecycleScope.launch {
+//                login(emailLog.text.toString(), passwordLog.text.toString())
+//
+//            }
         }
 
         return view
@@ -222,56 +211,56 @@ class LoginFragment : Fragment() {
 //
 //    }
     
-    private suspend fun login(email: String, plainTextPw: String) {
-        val user = withContext(Dispatchers.IO) {
-            appDb.userDao().getUserByEmail(email)
-        }
-
-        if (user == null) {
-            Toast.makeText(
-                requireActivity(),
-                "User not found. Check your details.",
-                Toast.LENGTH_SHORT
-            ).show()
-            Log.d("LOGIN", "User not found for email: $email")
-        } else {
-            // Extract the salt value from the user object
-            val salt = user.salt
-            // Hash the entered password using the retrieved salt value
-            val hashedPw = BCrypt.hashpw(plainTextPw, salt)
-            Log.d("LOGIN", "passwords: from db ${user.password} from newly hashed editext $hashedPw and plaintext $plainTextPw")
-            Log.d("LOGIN", "salt from db ${user.salt} test salt for edittext $salt")
-            Log.d("LOGIN", "lengths pw in db ${user.password.length} pw from editeext ${hashedPw.length}")
-
-            if (hashedPw.substringBefore(".")== user.password.substringBefore(".")) {
-                // Passwords match
-
-                //Sign token
-                // Format xxx.xxxx.xxx
-                // algorithm/token type -> payload/user data -> signature that tells us if the person is verified
-                val token = JWT.create()
-                    .withClaim("username", emailLog.text.toString())
-                    .withClaim("password", passwordLog.text.toString())
-                    //SIGNING
-                    // Once user authenticated via username & pw, grant token that has encrypted signature
-                    // to verify that they are who they say on
-                    //future requests
-                    .sign(Algorithm.HMAC256(JWT_SECRET))
-
-                Log.d("jwt", "3 part token $token")
-                Log.d("jwt", "my secret from gradle $JWT_SECRET")
-
-                Toast.makeText(requireActivity(), "Welcome back! Here is your token $token", Toast.LENGTH_LONG).show()
-                Log.d("LOGIN", "Passwords match for email: $email")
-                var navLogin = activity as FragmentNavigation
-                navLogin.navigateFrag(HomeFragment(), false)
-            } else {
-                // Passwords do not match
-                Log.d("LOGIN", "Passwords do not match for email: $email")
-                showSnackBar("Password does not match the email: $email")
-            }
-        }
-    }
+//    private suspend fun login(email: String, plainTextPw: String) {
+//        val user = withContext(Dispatchers.IO) {
+//            appDb.userDao().getUserByEmail(email)
+//        }
+//
+//        if (user == null) {
+//            Toast.makeText(
+//                requireActivity(),
+//                "User not found. Check your details.",
+//                Toast.LENGTH_SHORT
+//            ).show()
+//            Log.d("LOGIN", "User not found for email: $email")
+//        } else {
+//            // Extract the salt value from the user object
+//            val salt = user.salt
+//            // Hash the entered password using the retrieved salt value
+//            val hashedPw = BCrypt.hashpw(plainTextPw, salt)
+//            Log.d("LOGIN", "passwords: from db ${user.password} from newly hashed editext $hashedPw and plaintext $plainTextPw")
+//            Log.d("LOGIN", "salt from db ${user.salt} test salt for edittext $salt")
+//            Log.d("LOGIN", "lengths pw in db ${user.password.length} pw from editeext ${hashedPw.length}")
+//
+//            if (hashedPw.substringBefore(".")== user.password.substringBefore(".")) {
+//                // Passwords match
+//
+//                //Sign token
+//                // Format xxx.xxxx.xxx
+//                // algorithm/token type -> payload/user data -> signature that tells us if the person is verified
+//                val token = JWT.create()
+//                    .withClaim("username", emailLog.text.toString())
+//                    .withClaim("password", passwordLog.text.toString())
+//                    //SIGNING
+//                    // Once user authenticated via username & pw, grant token that has encrypted signature
+//                    // to verify that they are who they say on
+//                    //future requests
+//                    .sign(Algorithm.HMAC256(JWT_SECRET))
+//
+//                Log.d("jwt", "3 part token $token")
+//                Log.d("jwt", "my secret from gradle $JWT_SECRET")
+//
+//                Toast.makeText(requireActivity(), "Welcome back! Here is your token $token", Toast.LENGTH_LONG).show()
+//                Log.d("LOGIN", "Passwords match for email: $email")
+//                var navLogin = activity as FragmentNavigation
+//                navLogin.navigateFrag(HomeFragment(), false)
+//            } else {
+//                // Passwords do not match
+//                Log.d("LOGIN", "Passwords do not match for email: $email")
+//                showSnackBar("Password does not match the email: $email")
+//            }
+//        }
+//    }
 
     private fun showSnackBar(text: String) {
         Snackbar.make(
